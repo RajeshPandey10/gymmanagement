@@ -34,9 +34,9 @@ export function SignUp() {
     e.preventDefault();
     setError(""); // Clear any previous errors
     
-    if (!formData.email || !formData.password || !formData.name || !agreeToTerms) {
-      setError("Please fill all required fields and agree to terms");
-      toast.error("Please fill all required fields and agree to terms", {
+    if (!formData.email || !formData.password || !formData.name) {
+      setError("Please fill all required fields");
+      toast.error("Please fill all required fields", {
         position: "top-top"
       });
       return;
@@ -191,26 +191,7 @@ export function SignUp() {
                 required
               />
             </div>
-            <Checkbox
-              label={
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="flex items-center justify-start font-medium"
-                >
-                  I agree the&nbsp;
-                  <a
-                    href="#"
-                    className="font-normal text-black transition-colors hover:text-gray-900 underline"
-                  >
-                    Terms and Conditions
-                  </a>
-                </Typography>
-              }
-              containerProps={{ className: "-ml-2.5" }}
-              checked={agreeToTerms}
-              onChange={(e) => setAgreeToTerms(e.target.checked)}
-            />
+           
             <Button type="submit" className="mt-6" fullWidth disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center justify-center">

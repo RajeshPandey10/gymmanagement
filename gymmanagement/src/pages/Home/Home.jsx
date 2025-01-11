@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Typography } from "@material-tailwind/react";
-import { TrainerCard } from '../../components/TrainerCard';
+import TrainerCard from '../../components/TrainerCard';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import Pricing from './components/Pricing';
@@ -8,39 +8,30 @@ import FAQ from './components/FAQ';
 import Contact from './components/Contact';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import GymEquipments from './components/GymEquipment';
+import { api } from '../../services/api';
 
-export function Home() {
+const Home = () => {
+  const [trainers, setTrainers] = useState([]);
+
   useEffect(() => {
     AOS.init({
       duration: 1000,
       once: false,
       easing: 'ease-out'
     });
-  }, []);
 
-  const trainers = [
-    {
-      id: 1,
-      name: "John Smith", 
-      specialization: "Weight Training",
-      description: "Certified personal trainer with 5+ years of experience in strength training and muscle building.",
-      image: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=1974&auto=format&fit=crop"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      specialization: "Yoga & Flexibility",
-      description: "Experienced yoga instructor specializing in flexibility and mindfulness training.",
-      image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop"
-    },
-    {
-      id: 3,
-      name: "Mike Wilson",
-      specialization: "CrossFit", 
-      description: "CrossFit certified trainer with expertise in high-intensity interval training.",
-      image: "https://images.unsplash.com/photo-1533681904393-9ab6eee7e408?q=80&w=2070&auto=format&fit=crop"
-    }
-  ];
+    const fetchTrainers = async () => {
+      try {
+        const response = await api.get('/trainer');
+        setTrainers(response.data);
+      } catch (error) {
+        console.error('Error fetching trainers:', error);
+      }
+    };
+
+    fetchTrainers();
+  }, []);
 
   return (
     <main className="bg-gradient-to-b from-black to-gray-900 min-h-screen">
@@ -49,6 +40,9 @@ export function Home() {
       </div>
       <div data-aos="fade-up" className="transition-all duration-300 hover:shadow-lg">
         <Features />
+      </div>
+      <div data-aos="fade-up" className="transition-all duration-300 hover:shadow-lg">
+        <GymEquipments />
       </div>
       <section id="trainers" className="py-20 px-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[#e2ff3d]/5 via-transparent to-[#e2ff3d]/5"></div>
@@ -63,7 +57,7 @@ export function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {trainers.map((trainer, index) => (
               <div 
-                key={trainer.id}
+                key={trainer._id}
                 data-aos="zoom-in"
                 data-aos-delay={index * 150}
                 className="transition-all duration-500 ease-out hover:scale-[1.05] hover:shadow-[0_0_30px_rgba(226,255,61,0.3)] rounded-xl"
@@ -93,6 +87,6 @@ export function Home() {
       </div>
     </main>
   );
-}
+};
 
 export default Home;

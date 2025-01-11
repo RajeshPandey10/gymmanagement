@@ -1,7 +1,6 @@
 import {
   Card,
   Input,
-  Checkbox,
   Button,
   Typography,
 } from "@material-tailwind/react";
@@ -10,20 +9,20 @@ import { useState } from "react";
 import { api } from "../../services/api";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { useAuth } from '../../contexts/AuthContext';
 
 export function SignIn() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    termsAccepted: false
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const value = e.target.value;
     setFormData({
       ...formData,
       [e.target.name]: value
@@ -33,11 +32,6 @@ export function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.termsAccepted) {
-      setError("Please accept the Terms and Conditions");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -46,7 +40,8 @@ export function SignIn() {
 
       if (data.message === "Login successful") {
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+        setUser(data.user); // Update the user state
+
         // Show success toast
         toast.success('Successfully signed in!', {
           position: "top-center",
@@ -66,6 +61,7 @@ export function SignIn() {
         setError(data.message || "An error occurred during sign in");
       }
     } catch (error) {
+      console.error('Error during sign in:', error); // Log the error
       if (error.response) {
         toast.error(error.response.data.message || "Server error occurred");
         setError(error.response.data.message || "Server error occurred");
@@ -125,29 +121,7 @@ export function SignIn() {
               required
             />
           </div>
-          <Checkbox
-            name="termsAccepted"
-            checked={formData.termsAccepted}
-            onChange={handleChange}
-            required
-            label={
-              <Typography
-                variant="small"
-                color="gray"
-                className="flex items-center justify-start font-medium"
-              >
-                I agree the&nbsp;
-                <a
-                  href="#"
-                  className="font-normal text-black transition-colors hover:text-gray-900 underline"
-                >
-                  Terms and Conditions
-                </a>
-                <span className="text-red-500 ml-1">*</span>
-              </Typography>
-            }
-            containerProps={{ className: "-ml-2.5" }}
-          />
+      
           <Button 
             type="submit" 
             className="mt-6" 
