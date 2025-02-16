@@ -1,221 +1,287 @@
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  CardFooter,
-  Avatar,
-  Typography,
-  Tabs,
-  TabsHeader,
-  Tab,
-  Switch,
-  Tooltip,
-  Button,
-} from "@material-tailwind/react";
-import {
-  HomeIcon,
-  ChatBubbleLeftEllipsisIcon,
-  Cog6ToothIcon,
-  PencilIcon,
-} from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
-import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
-import { platformSettingsData, conversationsData, projectsData } from "@/data";
+import React, { useState, useEffect } from 'react';
+import { api } from '../../services/api';
+import { HiUserCircle, HiMail, HiPhone, HiLockClosed, HiTrash } from 'react-icons/hi';
+import { Dialog } from '@headlessui/react';
 
-export function Profile() {
-  return (
-    <>
-      <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
-        <div className="absolute inset-0 h-full w-full bg-gray-900/75" />
+const Profile = () => {
+  const [userData, setUserData] = useState({
+    username: '',
+    email: '',
+    phone: ''
+  });
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Inline Loader Component
+  const Loader = ({ size = 'medium' }) => {
+    const loaderSize = {
+      small: 'h-5 w-5 border-2',
+      medium: 'h-8 w-8 border-4',
+      large: 'h-12 w-12 border-4'
+    }[size];
+
+    return (
+      <div className={`animate-spin rounded-full ${loaderSize} border-solid border-current border-r-transparent`}>
+        <span className="sr-only">Loading...</span>
       </div>
-      <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100">
-        <CardBody className="p-4">
-          <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-6">
-              <Avatar
-                src="/img/bruce-mars.jpeg"
-                alt="bruce-mars"
-                size="xl"
-                variant="rounded"
-                className="rounded-lg shadow-lg shadow-blue-gray-500/40"
+    );
+  };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data } = await api.get('/user/me');
+        setUserData({
+          name: data.name,
+          email: data.email,
+          phoneNumber: data.phoneNumber
+        });
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleChangePhoneNumber = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put('/user/update-phone', { phone: userData.phoneNumber });
+      setSuccess('Phone number updated!');
+    } catch (error) {
+      setError(error.response?.data?.message || 'Update failed');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.delete(`/user/delete-account/${authUser.id}`);
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } catch (error) {
+      setError('Failed to delete account');
+    }
+  };
+
+  
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      await api.put('/user/change-password', { password: newPassword });
+      setSuccess('Password changed successfully!');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to change password');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="medium" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <HiUserCircle className="text-blue-600 text-4xl" />
+            Profile Settings
+          </h1>
+        </header>
+
+        {/* Status Messages */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-100">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg border border-green-100">
+            {success}
+          </div>
+        )}
+
+        {/* Personal Information Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-700">
+            <HiUserCircle className="text-gray-500" />
+            Personal Information
+          </h2>
+          
+          <form onSubmit={handleChangePhoneNumber} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Username</label>
+              <input
+                type="text"
+                value={userData.username}
+                readOnly
+                className="w-full p-2.5 border rounded-lg bg-gray-50 cursor-not-allowed"
               />
-              <div>
-                <Typography variant="h5" color="blue-gray" className="mb-1">
-                  Richard Davis
-                </Typography>
-                <Typography
-                  variant="small"
-                  className="font-normal text-blue-gray-600"
-                >
-                  CEO / Co-Founder
-                </Typography>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <div className="flex items-center gap-3">
+                <HiMail className="text-gray-500 shrink-0" />
+                <input
+                  type="email"
+                  value={userData.email}
+                  readOnly
+                  className="w-full p-2.5 border rounded-lg bg-gray-50 cursor-not-allowed"
+                />
               </div>
             </div>
-            <div className="w-96">
-              <Tabs value="app">
-                <TabsHeader>
-                  <Tab value="app">
-                    <HomeIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    App
-                  </Tab>
-                  <Tab value="message">
-                    <ChatBubbleLeftEllipsisIcon className="-mt-0.5 mr-2 inline-block h-5 w-5" />
-                    Message
-                  </Tab>
-                  <Tab value="settings">
-                    <Cog6ToothIcon className="-mt-1 mr-2 inline-block h-5 w-5" />
-                    Settings
-                  </Tab>
-                </TabsHeader>
-              </Tabs>
-            </div>
-          </div>
-          <div className="gird-cols-1 mb-12 grid gap-12 px-4 lg:grid-cols-2 xl:grid-cols-3">
+
             <div>
-              <Typography variant="h6" color="blue-gray" className="mb-3">
-                Platform Settings
-              </Typography>
-              <div className="flex flex-col gap-12">
-                {platformSettingsData.map(({ title, options }) => (
-                  <div key={title}>
-                    <Typography className="mb-4 block text-xs font-semibold uppercase text-blue-gray-500">
-                      {title}
-                    </Typography>
-                    <div className="flex flex-col gap-6">
-                      {options.map(({ checked, label }) => (
-                        <Switch
-                          key={label}
-                          id={label}
-                          label={label}
-                          defaultChecked={checked}
-                          labelProps={{
-                            className: "text-sm font-normal text-blue-gray-500",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <label className="block text-sm font-medium mb-2">Phone Number</label>
+              <div className="flex items-center gap-3">
+                <HiPhone className="text-gray-500 shrink-0" />
+                <input
+                  type="tel"
+                  value={userData.phone}
+                  onChange={(e) => setUserData({...userData, phone: e.target.value})}
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter phone number"
+                />
               </div>
             </div>
-            <ProfileInfoCard
-              title="Profile Information"
-              description="Hi, I'm Alec Thompson, Decisions: If you can't decide, the answer is no. If two equally difficult paths, choose the one more painful in the short term (pain avoidance is creating an illusion of equality)."
-              details={{
-                "first name": "Alec M. Thompson",
-                mobile: "(44) 123 1234 123",
-                email: "alecthompson@mail.com",
-                location: "USA",
-                social: (
-                  <div className="flex items-center gap-4">
-                    <i className="fa-brands fa-facebook text-blue-700" />
-                    <i className="fa-brands fa-twitter text-blue-400" />
-                    <i className="fa-brands fa-instagram text-purple-500" />
-                  </div>
-                ),
-              }}
-              action={
-                <Tooltip content="Edit Profile">
-                  <PencilIcon className="h-4 w-4 cursor-pointer text-blue-gray-500" />
-                </Tooltip>
-              }
-            />
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-3">
-                Platform Settings
-              </Typography>
-              <ul className="flex flex-col gap-6">
-                {conversationsData.map((props) => (
-                  <MessageCard
-                    key={props.name}
-                    {...props}
-                    action={
-                      <Button variant="text" size="sm">
-                        reply
-                      </Button>
-                    }
-                  />
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="px-4 pb-4">
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Projects
-            </Typography>
-            <Typography
-              variant="small"
-              className="font-normal text-blue-gray-500"
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Architects design houses
-            </Typography>
-            <div className="mt-6 grid grid-cols-1 gap-12 md:grid-cols-2 xl:grid-cols-4">
-              {projectsData.map(
-                ({ img, title, description, tag, route, members }) => (
-                  <Card key={title} color="transparent" shadow={false}>
-                    <CardHeader
-                      floated={false}
-                      color="gray"
-                      className="mx-0 mt-0 mb-4 h-64 xl:h-40"
-                    >
-                      <img
-                        src={img}
-                        alt={title}
-                        className="h-full w-full object-cover"
-                      />
-                    </CardHeader>
-                    <CardBody className="py-0 px-1">
-                      <Typography
-                        variant="small"
-                        className="font-normal text-blue-gray-500"
-                      >
-                        {tag}
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        color="blue-gray"
-                        className="mt-1 mb-2"
-                      >
-                        {title}
-                      </Typography>
-                      <Typography
-                        variant="small"
-                        className="font-normal text-blue-gray-500"
-                      >
-                        {description}
-                      </Typography>
-                    </CardBody>
-                    <CardFooter className="mt-6 flex items-center justify-between py-0 px-1">
-                      <Link to={route}>
-                        <Button variant="outlined" size="sm">
-                          view project
-                        </Button>
-                      </Link>
-                      <div>
-                        {members.map(({ img, name }, key) => (
-                          <Tooltip key={name} content={name}>
-                            <Avatar
-                              src={img}
-                              alt={name}
-                              size="xs"
-                              variant="circular"
-                              className={`cursor-pointer border-2 border-white ${
-                                key === 0 ? "" : "-ml-2.5"
-                              }`}
-                            />
-                          </Tooltip>
-                        ))}
-                      </div>
-                    </CardFooter>
-                  </Card>
-                )
-              )}
+              Save Changes
+            </button>
+          </form>
+        </section>
+
+        {/* Password Section */}
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-700">
+            <HiLockClosed className="text-gray-500" />
+            Change Password
+          </h2>
+          
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">New Password</label>
+              <div className="flex items-center gap-3">
+                <HiLockClosed className="text-gray-500 shrink-0" />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Minimum 6 characters"
+                  minLength="6"
+                />
+              </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Confirm Password</label>
+              <div className="flex items-center gap-3">
+                <HiLockClosed className="text-gray-500 shrink-0" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Re-enter your password"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Change Password
+            </button>
+          </form>
+        </section>
+
+        {/* Danger Zone */}
+        <section className="border-t pt-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-red-600">
+            <HiTrash className="text-red-600" />
+            Danger Zone
+          </h2>
+          
+          <button
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="w-full bg-red-50 text-red-700 py-2.5 rounded-lg hover:bg-red-100 transition-colors"
+          >
+            Delete Account Permanently
+          </button>
+        </section>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      >
+        <Dialog.Panel className="bg-white rounded-xl p-6 max-w-md w-[95%]">
+          <Dialog.Title className="text-2xl font-bold mb-3 flex items-center gap-2">
+            <HiTrash className="text-red-600" />
+            Confirm Account Deletion
+          </Dialog.Title>
+          
+          <p className="mb-5 text-gray-600">
+            This will permanently delete your account and all associated data. 
+            This action cannot be undone.
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 disabled:bg-red-400 flex items-center justify-center gap-2"
+            >
+              {isDeleting ? <Loader size="small" /> : 'Delete Account'}
+            </button>
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
+            >
+              Cancel
+            </button>
           </div>
-        </CardBody>
-      </Card>
-    </>
+        </Dialog.Panel>
+      </Dialog>
+    </div>
   );
-}
+};
 
 export default Profile;
