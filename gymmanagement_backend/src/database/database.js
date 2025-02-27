@@ -1,16 +1,23 @@
 const mongoose = require('mongoose');
 
-// MongoDB connection URL - using local MongoDB instance
-const mongoURL = 'mongodb+srv://gym:gym123@gyms.6ug2q.mongodb.net/';
+const connectDB = async () => {
+    try {
+        const mongoURL = process.env.MONGODB_URI;
+        if (!mongoURL) {
+            throw new Error('MongoDB connection URL is not defined');
+        }
 
-// Connect to MongoDB
-const connectDB = () => {
-    mongoose.connect(mongoURL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
-    .then(() => console.log('Successfully connected to MongoDB.'))
-    .catch(err => console.error('Could not connect to MongoDB:', err));
-}
+        const conn = await mongoose.connect(mongoURL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000
+        });
+
+        console.log(`MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+};
 
 module.exports = connectDB;

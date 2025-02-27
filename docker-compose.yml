@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./gymmanagement_backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/gymmanagement
+      - JWT_SECRET=${JWT_SECRET}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - CORS_ORIGIN=http://localhost:5173
+    volumes:
+      - ./gymmanagement_backend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./gymmanagement
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3000/api
+      - VITE_KHALTI_PUBLIC_KEY=${VITE_KHALTI_PUBLIC_KEY}
+    volumes:
+      - ./gymmanagement:/usr/src/app
+      - /usr/src/app/node_modules
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data: 

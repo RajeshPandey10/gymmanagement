@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import LazyLoader from "./utils/LazyLoader";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
 import Footer from "./components/Footer";
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy Load Pages
 const Home = lazy(() => import("./pages/Home/Home"));
@@ -22,11 +23,13 @@ const Nutritions = lazy(() => import("./pages/dashboard/Nutritions"));
 
 const App = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <Main />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <Main />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 
