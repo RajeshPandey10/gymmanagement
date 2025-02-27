@@ -13,4 +13,8 @@ frontend:
     deploy:
       - npm install --legacy-peer-deps
       - npm run build
+  env:
+    - VITE_API_URL
+    - VITE_KHALTI_PUBLIC_KEY
+    - VITE_APP_ENV
 yamlVersion: 2
